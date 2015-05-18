@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+#import seaborn as sns
 
 import pdb
 
@@ -12,8 +13,9 @@ from sklearn.decomposition.pca import PCA
 
 import sklearn.preprocessing
 
-
 train = pd.read_csv('train.csv',header=0)
+
+
 #train.ix[:,1:11].hist()
 train['above_water'] = train.Vertical_Distance_To_Hydrology > 0
 train['abs_water'] = abs(train.Vertical_Distance_To_Hydrology)
