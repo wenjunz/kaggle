@@ -14,38 +14,31 @@ import sklearn.preprocessing
 
 train = pd.read_csv('train.csv',header=0)
 train['datetime'] = pd.to_datetime(train['datetime'])
-train['year'] = pd.Series([train['datetime'][i].year for i in train.index], index=train.index)
+train['year'] = pd.Series([train['datetime'][i].year for i in train.index], index=train.index)-2011
 train['month'] = pd.Series([train['datetime'][i].month for i in train.index], index=train.index)
 train['day'] = pd.Series([train['datetime'][i].day for i in train.index], index=train.index)
 train['hour'] = pd.Series([train['datetime'][i].hour for i in train.index], index=train.index)
-train.ix[:,1:16].hist()
+train['log_casual'] = np.log(1+train['casual'])
+train['log_registered'] = np.log(1+train['registered'])
 
 test = pd.read_csv('test.csv',header=0)
 test['datetime'] = pd.to_datetime(test['datetime'])
-test['year'] = pd.Series([test['datetime'][i].year for i in test.index], index=test.index)
+test['year'] = pd.Series([test['datetime'][i].year for i in test.index], index=test.index)-2011
 test['month'] = pd.Series([test['datetime'][i].month for i in test.index], index=test.index)
 test['day'] = pd.Series([test['datetime'][i].day for i in test.index], index=test.index)
 test['hour'] = pd.Series([test['datetime'][i].hour for i in test.index], index=test.index)
-test.ix[:,1:16].hist()
 
 feature_cols = [col for col in train.columns \
-        if col not in ['datetime','casual','registered','count']]
+        if col not in ['datetime','casual','registered','count','log_casual','log_registered']]
 
-X_train, X_val, y_train_casual, y_val_casual = train_test_split(\
-        train[feature_cols], train['casual'],test_size=0.5, random_state=0)
-forest_casual = ensemble.RandomForestRegressor(n_estimators=500, criterion='mse', \
-        max_depth=None, min_samples_split=2, min_samples_leaf=1, \
-        max_features='auto', bootstrap=True, oob_score=False, n_jobs=-1, \
-        random_state=None, verbose=0).fit(X_train,y_train_casual)
-print('Validation Score is %f' %forest_casual.score(X_val,y_val_casual))
+X_train_casual, X_val_casual, y_train_casual, y_val_casual = train_test_split(\
+        train[feature_cols], train['log_casual'],test_size=0.5, random_state=0)
 
-X_train, X_val, y_train_registered, y_val_registered = train_test_split(\
-        train[feature_cols], train['registered'],test_size=0.5, random_state=0)
-forest_registered = ensemble.RandomForestRegressor(n_estimators=500, criterion='mse', \
-        max_depth=None, min_samples_split=2, min_samples_leaf=1, \
+forest_casual = ensemble.RandomForestRegressor(n_estimators=100, criterion='mse', \
+        max_depth=None, min_samples_split=11, min_samples_leaf=1, \
         max_features='auto', bootstrap=True, oob_score=False, n_jobs=-1, \
-        random_state=None, verbose=0).fit(X_train,y_train_registered)
-print('Validation Score is %f' %forest_registered.score(X_val,y_val_registered))
+        random_state=None, verbose=0).fit(X_train_casual,y_train_casual)
+print('Validation Score is %f' %forest_casual.score(X_val_casual,y_val_casual))
 
 y_val = y_val_casual + y_val_registered;
 print('Validation Score is %f' %forest_registered.score(X_val,y_val))
