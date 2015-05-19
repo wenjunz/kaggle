@@ -32,13 +32,19 @@ feature_cols = [col for col in train.columns \
         if col not in ['datetime','casual','registered','count','log_casual','log_registered']]
 
 X_train_casual, X_val_casual, y_train_casual, y_val_casual = train_test_split(\
-        train[feature_cols], train['log_casual'],test_size=0.5, random_state=0)
+        train[feature_cols], train['log_casual'],test_size=0.2, random_state=0)
 
-forest_casual = ensemble.RandomForestRegressor(n_estimators=100, criterion='mse', \
+forest_casual = ensemble.RandomForestRegressor(n_estimators=1000, criterion='mse', \
         max_depth=None, min_samples_split=11, min_samples_leaf=1, \
         max_features='auto', bootstrap=True, oob_score=False, n_jobs=-1, \
         random_state=None, verbose=0).fit(X_train_casual,y_train_casual)
 print('Validation Score is %f' %forest_casual.score(X_val_casual,y_val_casual))
+
+forest_registered = ensemble.RandomForestRegressor(n_estimators=1000, criterion='mse', \
+        max_depth=None, min_samples_split=11, min_samples_leaf=1, \
+        max_features='auto', bootstrap=True, oob_score=False, n_jobs=-1, \
+        random_state=None, verbose=0).fit(X_train_registered,y_train_registered)
+print('Validation Score is %f' %forest_registered.score(X_val_registered,y_val_registered))
 
 y_val = y_val_casual + y_val_registered;
 print('Validation Score is %f' %forest_registered.score(X_val,y_val))
@@ -48,13 +54,15 @@ print('Validation Score is %f' %forest_registered.score(X_val,y_val))
 
 #print(pd.DataFrame(forest.feature_importances_,index=feature_cols).sort([0], ascending=False)[:10])
 
-#forest.fit(train[feature_cols],train['Cover_Type'])
-pred_casual = forest_casual.predict(test[feature_cols])
-pred_registered = forest_casual.predict(test[feature_cols])
+forest_casual.fit(train[feature_cols],train['log_casual'])
+pred_casual = np.round(np.exp(forest_casual.predict(test[feature_cols]))-1)
 
-pred_count = map(int,pred_casual+pred_registered)
+forest_registered.fit(train[feature_cols],train['log_registered'])
+pred_registered = np.round(np.exp(forest_registered.predict(test[feature_cols]))-1)
+
+pred_count = pred_casual+pred_registered
 test['count'] = pred_count;
 
-test.to_csv('random_forest1.csv', cols=['datetime','count'],header=True,index=False)
+test.to_csv('random_forest3.csv', cols=['datetime','count'],header=True,index=False)
 
 
